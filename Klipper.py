@@ -7,7 +7,8 @@ import signal
 import sys
 from setproctitle import setproctitle
 
-setproctitle("klipper_leds") # used to kill process easily if needed
+## Set a process name for the script
+setproctitle("neopixel_script")
 
 ###############
 #### BOARD ####
@@ -17,7 +18,7 @@ pixel_pin = board.D21
 #################
 #### PRINTER ####
 #################
-printer_ip = ''
+printer_ip = '10.0.0.22'
 
 ####################
 #### LEDS STRIP ####
@@ -64,23 +65,24 @@ ABS_HIGH = 295
 ###################
 #### FUNCTIONS ####
 ###################
-# Turn Off LED Strip 1
+# Turn off stip 1
 def turn_off_pixels():
     pixels.fill(OFF)
     pixels.show()
-         
-# Turn Off LED Strip 2
+
+# Turn off strip 2
 def turn_off_pixels1():
     pixel1.fill(OFF)
     pixel1.show()
 
-# Exit script gracefully
+# Quit script gracefully and turn off LEDs
 def signal_handler(sig, frame):
     print('Turning off pixels and exiting...')
     turn_off_pixels()
+    turn_off_pixels1()
     sys.exit(0)
 
-# Connection and Temperature 
+# Get the printer temps
 def get_extruder_temperature(printer_ip, printer_port="80"):
     url = f"http://{printer_ip}:{printer_port}/printer/objects/query?extruder"
     try:
@@ -96,7 +98,13 @@ def get_extruder_temperature(printer_ip, printer_port="80"):
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
-# Low Temperature effects - only for one strip
+# Low Temp Stay on
+def lowTempStayOn(color1):
+    for i in range (start, end):
+        pixel1[i] = color1
+        pixel1[i].show()
+
+# Low Temp Blink
 def lowtemp(color1, color2, color3=OFF, delay1=0.3, delay2=0.5):
     pixel1[0] = color1
     pixel1.show()
@@ -111,15 +119,13 @@ def lowtemp(color1, color2, color3=OFF, delay1=0.3, delay2=0.5):
     pixel1.show()
     time.sleep(delay2)
 
-Turn on 
+Strip1 - Stay On
 def stayOn(color, start, end):
     for i in range (end):
-        pixel1[i] = color
-        pixel1[i].show()
         pixels[i] = color
-        pixels[i].show()
+        pixels.show()
 
-# Chasing effect - up
+# Chase UP
 def chasing_effect(start, end, color, delay=0.05):
     for i in range(start, end):
         # Turn on the current LED
@@ -136,7 +142,7 @@ def chasing_effect(start, end, color, delay=0.05):
     pixels[end - 1] = OFF
     pixels.show()
 
-# Chasing Effect - Down
+# Chase Down
 def chasing_effect_reversed(start, end, color, delay=0.05):
     for i in reversed(range(start, end)):
         pixels[i] = color
@@ -151,14 +157,15 @@ def chasing_effect_reversed(start, end, color, delay=0.05):
     pixels[start] = OFF
     pixels.show()
 
-# Chasing Effect Up and Down
+
+# Chase Up and Down
 def chasing_up_and_down(start, end, color, delay=0.05):
     # Chasing up
     chasing_effect(start, end, color, delay)
     # Chasing Down
     chasing_effect_reversed(start, end, color, delay)
 
-# Connection to the printer
+# Connections
 def connection(printer_ip, printer_port="80"):
     url = f"http://{printer_ip}:{printer_port}/printer/objects/query?extruder"
     try:
@@ -173,20 +180,50 @@ def connection(printer_ip, printer_port="80"):
         print(f"Error: {e}")
         return False
 
-# While Logic for the script
+# Rainbow Effects
+def wheel(pos):
+    # Input a value 0 to 255 to get a color value.
+    # The colours are a transition r - g - b - back to r.
+    if pos < 0 or pos > 255:
+        r = g = b = 0
+    elif pos < 85:
+        r = int(pos * 3)
+        g = int(255 - pos * 3)
+        b = 0
+    elif pos < 170:
+        pos -= 85
+        r = int(255 - pos * 3)
+        g = 0
+        b = int(pos * 3)
+    else:
+        pos -= 170
+        r = 0
+        g = int(pos * 3)
+        b = int(255 - pos * 3)
+    return (r, g, b) if ORDER in (neopixel.RGB, neopixel.GRB) else (r, g, b, 0)
+
+# Cycle through the Wheel of colors
+def rainbow_cycle(wait):
+    for j in range(255):
+        for i in range(total_pixels):
+            pixel_index = (i * 256 // total_pixels) + j
+            pixels[i] = wheel(pixel_index & 255)
+        pixels.show()
+        time.sleep(wait)
+
+# Loop logic
 con = connection(printer_ip)
 
 
 while con:
     temperature = get_extruder_temperature(printer_ip)
     if temperature is not None:
-        # convert string to float     
         et = float(temperature)
-        print("Temperature is " + str(et)) 
+        print("Temperature is " + str(et))
 
         if et > TEMP_LOW and  et < TEMP_ON:
-            chasing_effect(0, 2, BLUE)
-
+            #chasing_effect(0, 2, BLUE)
+            rainbow_cycle(0.01)
         ## PLA ##
         elif et > TEMP_ON and  et < PLA_LOW:
             chasing_effect(3, 5, GREEN)
