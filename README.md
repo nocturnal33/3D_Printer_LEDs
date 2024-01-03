@@ -32,11 +32,15 @@ Add the following entries to the bottom of the file and add your username
 <your user name> ALL=(ALL) NOPASSWD: /usr/bin/python3 /home/<your user name>/scripts/Marlin.py
 ```
 
-Then, add this to your `sudo crontab -e` file
+Then, add this to the root crontab file so the script starts on boot:
+```
+sudo crontab -e
 @reboot /usr/bin/python3 /home/<your user name>/scripts/Klipper.py
-
+```
 
 ## VLC (optional)
+### If there is a pi camera attached to your Pi: 
+Install VLC
 ```
 sudo apt install vlc
 ```
@@ -54,7 +58,7 @@ cvlc -vvv /path/to/your/video/file --sout '#standard{access=http,mux=ts,dst=:808
 ```
 raspistill -o ~/timelapse/image%02d.jpg -tl 5000 -t 120000
 ```
-This will take 1 picture every 5 seconds for 2 minutes (25 jpgs)
+This will take 1 picture every 5 seconds for 2 minutes (25 jpgs) - Modify to your needs
 Then, convert the images to timelapse:
 ```
 ffmpeg -r 10 -i ~/timelapse/image%02d.jpg -c:v libx264 ~/timelapse/tl.mp4
