@@ -24,6 +24,10 @@ sudo raspi-config nonint do_spi 0
 
 Pick the klipper or Marlin files and modify to your needs. Script will need to be run as root, so run the following:
 ```
+sudo visudo
+```
+Add the following entries to the bottom of the file and add your username
+```
 <your user name> ALL=(ALL) NOPASSWD: /usr/bin/python3 /home/<your user name>/scripts/Klipper.py
 <your user name> ALL=(ALL) NOPASSWD: /usr/bin/python3 /home/<your user name>/scripts/Marlin.py
 ```
