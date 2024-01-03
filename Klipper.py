@@ -7,7 +7,7 @@ import signal
 import sys
 from setproctitle import setproctitle
 
-setproctitle("klipper_leds")
+setproctitle("klipper_leds") # used to kill process easily if needed
 
 ###############
 #### BOARD ####
@@ -64,20 +64,23 @@ ABS_HIGH = 295
 ###################
 #### FUNCTIONS ####
 ###################
-
+# Turn Off LED Strip 1
 def turn_off_pixels():
     pixels.fill(OFF)
     pixels.show()
-
+         
+# Turn Off LED Strip 2
 def turn_off_pixels1():
     pixel1.fill(OFF)
     pixel1.show()
 
+# Exit script gracefully
 def signal_handler(sig, frame):
     print('Turning off pixels and exiting...')
     turn_off_pixels()
     sys.exit(0)
 
+# Connection and Temperature 
 def get_extruder_temperature(printer_ip, printer_port="80"):
     url = f"http://{printer_ip}:{printer_port}/printer/objects/query?extruder"
     try:
@@ -93,11 +96,7 @@ def get_extruder_temperature(printer_ip, printer_port="80"):
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
-def set_pixels_color(start, end, color):
-    for i in range(start, end):
-        pixels[i] = color
-
-
+# Low Temperature effects - only for one strip
 def lowtemp(color1, color2, color3=OFF, delay1=0.3, delay2=0.5):
     pixel1[0] = color1
     pixel1.show()
@@ -112,11 +111,15 @@ def lowtemp(color1, color2, color3=OFF, delay1=0.3, delay2=0.5):
     pixel1.show()
     time.sleep(delay2)
 
+Turn on 
 def stayOn(color, start, end):
     for i in range (end):
-        pixel[i] = color
-        pixel.show()
+        pixel1[i] = color
+        pixel1[i].show()
+        pixels[i] = color
+        pixels[i].show()
 
+# Chasing effect - up
 def chasing_effect(start, end, color, delay=0.05):
     for i in range(start, end):
         # Turn on the current LED
@@ -133,6 +136,7 @@ def chasing_effect(start, end, color, delay=0.05):
     pixels[end - 1] = OFF
     pixels.show()
 
+# Chasing Effect - Down
 def chasing_effect_reversed(start, end, color, delay=0.05):
     for i in reversed(range(start, end)):
         pixels[i] = color
@@ -147,13 +151,14 @@ def chasing_effect_reversed(start, end, color, delay=0.05):
     pixels[start] = OFF
     pixels.show()
 
-
+# Chasing Effect Up and Down
 def chasing_up_and_down(start, end, color, delay=0.05):
     # Chasing up
     chasing_effect(start, end, color, delay)
     # Chasing Down
     chasing_effect_reversed(start, end, color, delay)
 
+# Connection to the printer
 def connection(printer_ip, printer_port="80"):
     url = f"http://{printer_ip}:{printer_port}/printer/objects/query?extruder"
     try:
@@ -168,14 +173,16 @@ def connection(printer_ip, printer_port="80"):
         print(f"Error: {e}")
         return False
 
+# While Logic for the script
 con = connection(printer_ip)
 
 
 while con:
     temperature = get_extruder_temperature(printer_ip)
     if temperature is not None:
+        # convert string to float     
         et = float(temperature)
-        print("Temperature is " + str(et))
+        print("Temperature is " + str(et)) 
 
         if et > TEMP_LOW and  et < TEMP_ON:
             chasing_effect(0, 2, BLUE)
