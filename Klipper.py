@@ -18,7 +18,7 @@ pixel_pin = board.D21
 #################
 #### PRINTER ####
 #################
-printer_ip = '10.0.0.22'
+printer_ip = ''
 
 ####################
 #### LEDS STRIP ####
