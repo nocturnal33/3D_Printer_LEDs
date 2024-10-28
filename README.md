@@ -6,6 +6,7 @@ Using a RaspberryPi Zero and basic image. Make sure the pi is on the same local 
 
 ```
 sudo apt update && sudo apt upgrade -y
+sudo apt-get install python3-pip
 sudo pip3 install Adafruit-Blinka
 sudo pip3 install rpi_ws281x adafruit-circuitpython-neopixel
 sudo pip3 install setproctitle
